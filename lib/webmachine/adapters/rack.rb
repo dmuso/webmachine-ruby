@@ -74,8 +74,22 @@ module Webmachine
                       end
                     end
 
-        rack_res = ::Rack::Response.new(rack_body, rack_status, rack_headers)
-        rack_res.finish
+        if env['rack.hijack?'] && Webmachine::ChunkedBody === rack_body
+          rack_headers['rack.hijack'] = lambda do |io|
+            begin
+              rack_body.each do |part|
+                io.write(part)
+                io.flush
+              end
+            rescue Errno::EPIPE
+            ensure
+              io.close
+            end
+          end
+          ::Rack::Response.new([], rack_status, rack_headers).finish
+        else
+          ::Rack::Response.new(rack_body, rack_status, rack_headers).finish
+        end
       end
 
       # Wraps the Rack input so it can be treated like a String or

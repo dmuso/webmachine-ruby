@@ -37,3 +37,5 @@ end
 platforms :jruby do
   gem 'jruby-openssl'
 end
+
+gem 'rack-test', :github => 'brynary/rack-test'

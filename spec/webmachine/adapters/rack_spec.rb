@@ -159,4 +159,53 @@ describe Webmachine::Adapters::Rack do
     last_response.original_headers["Transfer-Encoding"].should == "chunked"
     last_response.body.split("\r\n").should == %W{6 Stream 0}
   end
+
+  context "on rack servers supporting hijacking" do
+    before do
+      env "rack.hijack?", true
+      env "rack.hijack", lambda {}
+    end
+
+    %w{
+      application/vnd.webmachine.streaming+proc
+      application/vnd.webmachine.streaming+enum
+    }.each do |media_type|
+
+      it "should ignore response body for #{media_type}" do
+        header "ACCEPT", media_type
+        get "/test"
+        last_response.body.should == ""
+      end
+
+      it "should set the special header rack.hijack to an object that responds to call accepting an argument for #{media_type}" do
+        header "ACCEPT", media_type
+        get "/test"
+        last_response.original_headers["rack.hijack"].should respond_to(:call).with(1).argument
+      end
+
+      it "should close server socket after streaming for #{media_type}" do
+        header "ACCEPT", media_type
+        get "/test"
+        r, w = IO.pipe
+        last_response.original_headers["rack.hijack"].call(w)
+        w.should be_closed
+      end
+    end
+
+    it "should handle streaming response body for application/vnd.webmachine.streaming+proc" do
+      header "ACCEPT", "application/vnd.webmachine.streaming+proc"
+      get "/test"
+      r, w = IO.pipe
+      last_response.original_headers["rack.hijack"].call(w)
+      r.read.split("\r\n").should == %W{6 Stream 0}
+    end
+
+    it "should handle streaming response body for application/vnd.webmachine.streaming+enum" do
+      header "ACCEPT", "application/vnd.webmachine.streaming+enum"
+      get "/test"
+      r, w = IO.pipe
+      last_response.original_headers["rack.hijack"].call(w)
+      r.read.split("\r\n").should == %W{6 Hello, 6 World! 0}
+    end
+  end
 end

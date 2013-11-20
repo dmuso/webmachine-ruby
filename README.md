@@ -22,61 +22,31 @@ when given a clear stack.
 
 ## Getting Started
 
-It's pretty easy to construct web application in Webmachine:
+an example of a simple resource:
 
 ```ruby
 require 'webmachine'
-# Require any of the files that contain your resources here
-require 'my_resource'
-
-# Create an application which encompasses routes and configruation
-MyApp = Webmachine::Application.new do |app|
-  app.routes do
-    # Point all URIs at the MyResource class
-    add ['*'], MyResource
-  end
-end
-
-# Start the server, binds to port 8080 using WEBrick
-MyApp.run
-```
-
-Your resource will look something like this:
-
-```ruby
 class MyResource < Webmachine::Resource
   def to_html
     "<html><body>Hello, world!</body></html>"
   end
 end
+
+# start a web server to serve requests via localhost
+MyResource.run
 ```
 
-Run the first file and your application is up. That's all there is to
-it! If you want to customize your resource more, look at the available
-callbacks in lib/webmachine/resource/callbacks.rb. For example, you
-might want to enable "gzip" compression on your resource, for which
-you can simply add an `encodings_provided` callback method:
-
-```ruby
-class MyResource < Webmachine::Resource
-  def encodings_provided
-    {"gzip" => :encode_gzip, "identity" => :encode_identity}
-  end
-
-  def to_html
-    "<html><body>Hello, world!</body></html>"
-  end
-end
-```
-
-There are many other HTTP features exposed to your resource through
-{Webmachine::Resource::Callbacks}. Give them a try!
+that's it. `Webmachine::Resource.run` is available to provide for quick
+prototyping and development. in a real application, you will want to
+configure what path a resource is served from. see `Application/Configurator`
+for more details on how to do that. there are many other HTTP features exposed
+to a resource through {Webmachine::Resource::Callbacks}. Give them a try!
 
 ### Application/Configurator
 
 There's a configurator that allows you to set the ip address and port
-bindings as well as a different webserver adapter.  You can also add
-your routes in a block (as shown above). Both of these call return the
+bindings as well as a different webserver adapter.  You can also map
+resource(s) to different paths. Both of these call return the
 `Webmachine::Application` instance, so you could chain them if you
 like. If you don't want to create your own separate application
 object, `Webmachine.application` will return a global one.

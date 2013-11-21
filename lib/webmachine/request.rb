@@ -9,7 +9,7 @@ module Webmachine
     attr_reader :method, :uri, :headers, :body
     attr_accessor :disp_path, :path_info, :path_tokens
 
-    STANDARD_HTTP_METHODS = %w[GET HEAD POST PUT DELETE TRACE CONNECT OPTIONS]
+    STANDARD_HTTP_METHODS = %w[GET HEAD POST PUT PATCH DELETE TRACE CONNECT OPTIONS]
 
     # @param [String] method the HTTP request method
     # @param [URI] uri the requested URI, including host, scheme and
@@ -117,6 +117,14 @@ module Webmachine
     #   true if this request was made with the PUT method
     def put?
       method == "PUT"
+    end
+
+    # Is this a PATCH request?
+    #
+    # @return [Boolean]
+    #   true if this request was made with the PUT method
+    def patch?
+      method == "PATCH"
     end
 
     # Is this a DELETE request?

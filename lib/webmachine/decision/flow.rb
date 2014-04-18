@@ -287,7 +287,7 @@ module Webmachine
 
       # PUT?
       def i7
-        request.put? ? :i4 : :k7
+        request.put? || request.patch? ? :i4 : :k7
       end
 
       # If-none-match exists?
@@ -455,7 +455,7 @@ module Webmachine
 
       # PUT?
       def o16
-        request.put? ? :o14 : :o18
+        request.put? || request.patch? ? :o14 : :o18
       end
 
       # Multiple representations?
@@ -493,8 +493,27 @@ module Webmachine
         if resource.is_conflict?
           409
         else
+          # res = accept_helper
+          # (Fixnum === res) ? res : :p11
+          :p7
+        end
+      end
+
+      def p7
+        if request.put?
           res = accept_helper
           (Fixnum === res) ? res : :p11
+        else
+          :o7
+        end
+      end
+
+      def o7
+        if resource.allow_missing_patch?
+          res = accept_helper
+          (Fixnum === res) ? res : :p11
+        else
+          404
         end
       end
 

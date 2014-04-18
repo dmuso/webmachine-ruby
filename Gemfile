@@ -1,18 +1,21 @@
 require 'rbconfig'
-
 source 'https://rubygems.org'
-
 gemspec
 
-gem 'bundler'
+group :development do
+  gem "yard"
+  gem "rake"
+end
+
+group :test do
+  gem "rspec"
+  gem "rack"
+end
 
 group :webservers do
   gem 'mongrel',  '~> 1.2.beta', :platform => [:mri, :rbx]
-
-  if RUBY_VERSION >= '1.9'
-    gem 'reel', '~> 0.4.0.pre5', :platform => [:ruby_19, :ruby_20, :jruby]
-  end
-
+  gem 'reel', '~> 0.4.0.pre5'
+  gem 'http', '~> 0.5.0'
   gem 'hatetepe', '~> 0.5.2'
 end
 

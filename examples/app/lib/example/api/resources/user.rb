@@ -15,7 +15,7 @@ module Example
         end
 
         def content_types_accepted
-          [["application/json-patch+json", :patch_json]]
+          [["application/xml", :from_xml]]
         end
 
         def patch_content_types_accepted
@@ -26,6 +26,10 @@ module Example
           @user.update_attributes request_body
           response.body = @user.to_json
           true
+        end
+
+        def from_xml
+          raise NotImplementedError
         end
 
         def to_json

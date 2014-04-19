@@ -64,6 +64,10 @@ module Webmachine
           :b9
         else
           response.headers["Allow"] = resource.allowed_methods.join(", ")
+          if resource.allowed_methods.include?("PATCH")
+            patch_content_types = resource.patch_content_types_accepted.collect(&:first).join(", ")
+            response.headers["Accept-Patch"] = patch_content_types unless patch_content_types.empty?
+          end
           405
         end
       end

@@ -232,6 +232,14 @@ module Webmachine
         []
       end
 
+      # Similarly to content_types_accepted, this should return an array
+      # of mediatype/handler pairs, except that it is only for incoming PATCH requests.
+      # @return [Array] an array of mediatype/handler pairs
+      # @api callback
+      def patch_content_types_accepted
+        []
+      end
+
       # If this is anything other than nil, it must be an array of pairs
       # where each pair is of the form Charset, Converter where Charset
       # is a string naming a charset and Converter is an arity-1 method

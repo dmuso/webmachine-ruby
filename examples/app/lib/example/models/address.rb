@@ -2,9 +2,9 @@ require 'json'
 
 module Example
   module Models
-    class User
+    class Address
 
-      attr_accessor :first_name, :last_name, :address
+      attr_accessor :street, :city
 
       def initialize attributes
         attributes.each_pair do | key, value |
@@ -12,16 +12,12 @@ module Example
         end
       end
 
-      def as_json
-        {firstName: first_name, lastName: last_name, address: address}
-      end
-
       def to_json
-        as_json.to_json
+        {street: street, city: city}.to_json
       end
 
-      def self.find_by_id id
-        #
+      def self.find_by_user_id id
+        raise NotImplementedError
       end
 
     end

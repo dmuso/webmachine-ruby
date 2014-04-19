@@ -915,7 +915,6 @@ describe Webmachine::Decision::Flow do
         def post_is_create?; @create; end
         def create_path; @new_loc; end
         def content_types_accepted; [["text/plain", :accept_text]]; end
-        def patch_content_types_accepted; [["text/plain", :accept_text]]; end
         def accept_text
           response.headers['Location'] = @new_loc.to_s if @new_loc
           true
@@ -1102,7 +1101,6 @@ describe Webmachine::Decision::Flow do
         def allow_missing_post?; true; end
         def allow_missing_patch?; true; end
         def content_types_accepted; [[request.content_type, :accept_all]]; end
-        def patch_content_types_accepted; [[request.content_type, :accept_all]]; end
         def multiple_choices?; @multiple; end
         def process_post
           response.body = "Response content."
@@ -1149,7 +1147,6 @@ describe Webmachine::Decision::Flow do
         def allow_missing_post?; true; end
         def allow_missing_patch?; true; end
         def content_types_accepted; [[request.content_type, :accept_all]]; end
-        def patch_content_types_accepted; [[request.content_type, :accept_all]]; end
         def process_post
           response.body = @body if @body
           true

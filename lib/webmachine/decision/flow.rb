@@ -457,7 +457,7 @@ module Webmachine
         end
       end
 
-      # PUT?
+      # PUT/PATCH?
       def o16
         request.put? || request.patch? ? :o14 : :o18
       end
@@ -497,8 +497,6 @@ module Webmachine
         if resource.is_conflict?
           409
         else
-          # res = accept_helper
-          # (Fixnum === res) ? res : :p11
           :p7
         end
       end
@@ -514,8 +512,18 @@ module Webmachine
 
       def o7
         if resource.allow_missing_patch?
-          res = accept_helper
-          (Fixnum === res) ? res : :p11
+          case result = resource.create_missing_path
+          when true
+            result = accept_helper
+            if has_response_body?
+              response.headers['Location'] = request.uri.to_s # Should be a 204 otherwise
+            end
+            (Fixnum === result) ? res : :p11
+          when Fixnum
+            result
+          else
+            raise InvalidResource, t('create_missing_path_invalid', :result => result.inspect)
+          end
         else
           404
         end

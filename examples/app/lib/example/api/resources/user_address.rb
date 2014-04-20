@@ -22,17 +22,15 @@ module Example
           user != nil # Allow patch to a missing address if the user already exists
         end
 
-        def patch_json
-          # Not sure about the elegant way to do this
-          unless @address
-            # This should be in a repository of course... but for the sake of the example, do it here...
-            @address = Example::Models::Address.new
-            @address.save
-            user.address = @address
-            user.save
-            response.headers['Location'] = request.uri
-          end
+        def create_missing_path
+          @address = Example::Models::Address.new
+          @address.save
+          user.address = @address
+          user.save
+          true
+        end
 
+        def patch_json
           @address.update_attributes request_body
           response.body = @address.to_json
           true

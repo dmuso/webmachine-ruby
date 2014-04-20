@@ -834,7 +834,7 @@ describe Webmachine::Decision::Flow do
 
   end
 
-  describe "#p7 (PUT?)" do
+  describe "#p7 (PUT/PATCH?)" do
     let(:body){ "This is the body." }
     let(:headers) { Webmachine::Headers["Content-Type" => "text/plain", "Content-Length" => body.size.to_s] }
     let(:resource) do
@@ -912,6 +912,7 @@ describe Webmachine::Decision::Flow do
         def process_post; true; end
         def allow_missing_post?; true; end
         def allow_missing_patch?; true; end
+        def create_missing_path; true; end
         def post_is_create?; @create; end
         def create_path; @new_loc; end
         def content_types_accepted; [["text/plain", :accept_text]]; end
@@ -1085,7 +1086,7 @@ describe Webmachine::Decision::Flow do
   # These decisions are covered by dozens of other examples. Leaving
   # commented for now.
   # describe "#n16 (POST?)" do it; end
-  # describe "#o16 (PUT?)" do it; end
+  # describe "#o16 (PUT/PATCH?)" do it; end
 
   describe "#o18 (Multiple representations?)" do
     let(:resource) do
@@ -1100,6 +1101,7 @@ describe Webmachine::Decision::Flow do
         def resource_exists?; @exist; end
         def allow_missing_post?; true; end
         def allow_missing_patch?; true; end
+        def create_missing_path; true; end
         def content_types_accepted; [[request.content_type, :accept_all]]; end
         def multiple_choices?; @multiple; end
         def process_post
@@ -1113,7 +1115,9 @@ describe Webmachine::Decision::Flow do
       end
     end
 
-    [["GET", true],["HEAD", true],["PUT", true],["PUT", false],["PATCH", true],["PATCH", false],["POST",true],["POST",false],
+    # Beth - don't really understand this
+    # ["PATCH", false] => should return a 201 if resource did not exist and was created, with a response body
+    [["GET", true],["HEAD", true],["PUT", true],["PUT", false],["PATCH", true],["POST",true],["POST",false],
      ["DELETE", true]].each do |m, e|
       context "when the method is #{m} and the resource #{e ? 'exists' : 'does not exist' }" do
         let(:method){ m }
@@ -1146,6 +1150,7 @@ describe Webmachine::Decision::Flow do
         def resource_exists?; @exist; end
         def allow_missing_post?; true; end
         def allow_missing_patch?; true; end
+        def create_missing_path; true; end
         def content_types_accepted; [[request.content_type, :accept_all]]; end
         def process_post
           response.body = @body if @body

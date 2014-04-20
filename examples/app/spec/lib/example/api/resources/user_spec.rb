@@ -68,6 +68,11 @@ describe Example::Api::Resources::User do
         last_response.body.should eq user_json
       end
 
+      xit "includes a Content-Location header" do
+        subject
+        last_response.headers['Content-Location'].should eq "http://example.org/users/1"
+      end
+
     end
 
     context "when the user does not exist" do

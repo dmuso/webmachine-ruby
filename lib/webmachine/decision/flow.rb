@@ -289,7 +289,7 @@ module Webmachine
         end
       end
 
-      # PUT?
+      # PUT/PATCH?
       def i7
         request.put? || request.patch? ? :i4 : :k7
       end
@@ -457,7 +457,7 @@ module Webmachine
         end
       end
 
-      # PUT?
+      # PUT/PATCH?
       def o16
         request.put? || request.patch? ? :o14 : :o18
       end
@@ -497,8 +497,6 @@ module Webmachine
         if resource.is_conflict?
           409
         else
-          # res = accept_helper
-          # (Fixnum === res) ? res : :p11
           :p7
         end
       end
@@ -514,8 +512,17 @@ module Webmachine
 
       def o7
         if resource.allow_missing_patch?
-          res = accept_helper
-          (Fixnum === res) ? res : :p11
+          case uri = resource.create_path
+          when nil
+            raise InvalidResource, t('create_path_nil', :class => resource.class)
+          when URI, String
+            base_uri = resource.base_uri || request.base_uri
+            new_uri = URI.join(base_uri.to_s, uri)
+            request.disp_path = new_uri.path
+            response.headers['Location'] = new_uri.to_s
+            result = accept_helper
+            return (Fixnum === result) ? res : :p11
+          end
         else
           404
         end
@@ -523,6 +530,9 @@ module Webmachine
 
       # New resource?
       def p11
+        if request.patch? && has_response_body?
+          response.headers['Content-Location'] = request.uri.to_s
+        end
         !response.headers["Location"] ? :o20 : 201
       end
 

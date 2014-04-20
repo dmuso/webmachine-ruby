@@ -834,7 +834,7 @@ describe Webmachine::Decision::Flow do
 
   end
 
-  describe "#p7 (PUT?)" do
+  describe "#p7 (PUT/PATCH?)" do
     let(:body){ "This is the body." }
     let(:headers) { Webmachine::Headers["Content-Type" => "text/plain", "Content-Length" => body.size.to_s] }
     let(:resource) do
@@ -1086,7 +1086,7 @@ describe Webmachine::Decision::Flow do
   # These decisions are covered by dozens of other examples. Leaving
   # commented for now.
   # describe "#n16 (POST?)" do it; end
-  # describe "#o16 (PUT?)" do it; end
+  # describe "#o16 (PUT/PATCH?)" do it; end
 
   describe "#o18 (Multiple representations?)" do
     let(:resource) do

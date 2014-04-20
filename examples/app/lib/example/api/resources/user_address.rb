@@ -14,8 +14,8 @@ module Example
           [["application/json", :to_json]]
         end
 
-        def patch_content_types_accepted
-          [["application/json-patch+json", :patch_json]]
+        def content_types_accepted
+          [["application/json-patch+json", :patch_json, "PATCH"]]
         end
 
         def allow_missing_patch?

@@ -57,12 +57,19 @@ module Webmachine
 
       # Assists in receiving request bodies
       def accept_helper
-        content_type = MediaType.parse(request.content_type || 'application/octet-stream')
-        acceptable = resource.content_types_accepted.find {|ct, _| content_type.match?(ct) }
+        acceptable = content_type_handler
         if acceptable
-          resource.send(acceptable.last)
+          resource.send(acceptable[1])
         else
           415
+        end
+      end
+
+      def content_type_handler
+        content_type = MediaType.parse(request.content_type || 'application/octet-stream')
+
+        resource.content_types_accepted.find do |ct, _, method|
+          (method.nil? || method == request.method) && content_type.match?(ct)
         end
       end
 

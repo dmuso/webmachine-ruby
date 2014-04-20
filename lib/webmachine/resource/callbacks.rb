@@ -56,6 +56,15 @@ module Webmachine
         false
       end
 
+      # If the resource accepts PATCH requests to nonexistent resources,
+      # then this should return true. Defaults to false.
+      # @return [true,false] Whether to accept PATCH requests to missing
+      #     resources.
+      # @api callback
+      def allow_missing_patch?
+        false
+      end
+
       # If the request is malformed, this should return true, which will
       # result in a '400 Malformed Request' response. Defaults to false.
       # @return [true,false] Whether the request is malformed.
@@ -134,7 +143,7 @@ module Webmachine
       # @return [Array<String>] known methods
       # @api callback
       def known_methods
-        ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT', 'OPTIONS']
+        ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'TRACE', 'CONNECT', 'OPTIONS']
       end
 
       # This method is called when a DELETE request should be enacted,

@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'webmachine/adapters/rack'
 
 describe Webmachine::Decision::Flow do
   subject { Webmachine::Decision::FSM.new(resource, request, response) }
@@ -635,10 +636,10 @@ describe Webmachine::Decision::Flow do
     end
   end
 
-  describe "#i7 (PUT?)" do
+  describe "#i7 (PUT/PATCH?)" do
     let(:resource) do
       missing_resource_with do
-        def allowed_methods; %w{GET HEAD PUT POST}; end
+        def allowed_methods; %w{GET HEAD PUT PATCH POST}; end
         def process_post; true; end
       end
     end
@@ -656,7 +657,18 @@ describe Webmachine::Decision::Flow do
       after { [404, 410, 303].should_not include(response.code) }
     end
 
-    context "when the method is not PUT" do
+    context "when the method is PATCH" do
+      let(:method){ "PATCH" }
+
+      it "should not reach state k7" do
+        subject.should_not_receive(:k7)
+        subject.run
+      end
+
+      after { [410, 303].should_not include(response.code) }
+    end
+
+    context "when the method is not PUT or PATCH" do
       let(:method){ %W{GET HEAD POST DELETE}[rand(4)] }
 
       it "should not reach state i4" do
@@ -673,25 +685,30 @@ describe Webmachine::Decision::Flow do
       missing_resource_with do
         attr_accessor :location
         def moved_permanently?; @location; end
-        def allowed_methods; %w[PUT]; end
+        def allowed_methods; %w[PUT PATCH]; end
       end
     end
-    let(:method){ "PUT" }
-    let(:body){ "This is the body." }
-    let(:headers) { Webmachine::Headers["Content-Type" => "text/plain", "Content-Length" => body.size.to_s] }
 
-    it "should reply with 301 when the resource has moved" do
-      resource.location = URI.parse("http://localhost:8098/newuri")
-      subject.run
-      response.code.should == 301
-      response.headers['Location'].should == resource.location.to_s
+    %W{PUT PATCH}.each do | http_method |
+      context "when the method is #{http_method}" do
+        let(:method) { http_method }
+        let(:body){ "This is the body." }
+        let(:headers) { Webmachine::Headers["Content-Type" => "text/plain", "Content-Length" => body.size.to_s] }
+
+        it "should reply with 301 when the resource has moved" do
+          resource.location = URI.parse("http://localhost:8098/newuri")
+          subject.run
+          response.code.should == 301
+          response.headers['Location'].should == resource.location.to_s
+        end
+        it "should not reply with 301 when resource has not moved" do
+          resource.location = false
+          subject.run
+          response.code.should_not == 301
+        end
+      end
     end
 
-    it "should not reply with 301 when resource has not moved" do
-      resource.location = false
-      subject.run
-      response.code.should_not == 301
-    end
   end
 
   describe "Redirection (Resource previously existed)" do
@@ -793,20 +810,61 @@ describe Webmachine::Decision::Flow do
     let(:resource) do
       missing_resource_with do
         attr_writer :conflict
-        def allowed_methods; %W{PUT}; end
+        def allowed_methods; %W{PUT PATCH}; end
         def is_conflict?; @conflict; end
       end
     end
-    let(:method){ "PUT" }
-    it "should reply with 409 if the resource is in conflict" do
-      resource.conflict = true
-      subject.run
-      response.code.should == 409
+
+    %W{PUT PATCH}.each do | http_method |
+      context "when the method is #{http_method}" do
+        let(:method){ http_method }
+        it "should reply with 409 if the resource is in conflict" do
+          resource.conflict = true
+          subject.run
+          response.code.should == 409
+        end
+        it "should not reply with 409 if the resource is not in conflict" do
+          resource.conflict = false
+          subject.run
+          response.code.should_not == 409
+        end
+      end
+
     end
-    it "should not reply with 409 if the resource is in conflict" do
-      resource.conflict = false
-      subject.run
-      response.code.should_not == 409
+
+  end
+
+  describe "#p7 (PUT?)" do
+    let(:body){ "This is the body." }
+    let(:headers) { Webmachine::Headers["Content-Type" => "text/plain", "Content-Length" => body.size.to_s] }
+    let(:resource) do
+      resource_with do
+        attr_writer :new_loc, :exist
+        def allowed_methods; %w{PUT PATCH}; end
+        def resource_exists?; false; end
+        def content_types_accepted; [["text/plain", :accept_text]]; end
+        def accept_text
+          true
+        end
+      end
+    end
+    context "when the method is PUT" do
+      let(:method) { "PUT" }
+      it "continues to p11" do
+        subject.should_receive(:p11).and_call_original
+        subject.run
+      end
+      it "never reaches o7" do
+        subject.should_not_receive(:o7)
+        subject.run
+      end
+    end
+    context "when the method is PATCH" do
+      let(:method) { "PATCH" }
+      it "continues to o7" do
+        subject.should_receive(:o7).and_call_original
+        subject.run
+      end
     end
   end
 
@@ -849,10 +907,11 @@ describe Webmachine::Decision::Flow do
       resource_with do
         attr_writer :exist, :new_loc, :create
 
-        def allowed_methods; %W{PUT POST}; end
+        def allowed_methods; %W{PUT POST PATCH}; end
         def resource_exists?; @exist; end
         def process_post; true; end
         def allow_missing_post?; true; end
+        def allow_missing_patch?; true; end
         def post_is_create?; @create; end
         def create_path; @new_loc; end
         def content_types_accepted; [["text/plain", :accept_text]]; end
@@ -877,7 +936,29 @@ describe Webmachine::Decision::Flow do
             subject.run
             response.code.should == 201
           end
-          it "should not reply with 201 when the Location header has been set" do
+          it "should not reply with 201 when the Location header has not been set" do
+            resource.exist = e
+            subject.run
+            response.headers['Location'].should be_nil
+            response.code.should_not == 201
+          end
+        end
+      end
+    end
+
+    context "when the method is PATCH" do
+      let(:method){ "PATCH" }
+      [true, false].each do |e|
+        context "and the resource #{ e ? "does not exist" : 'exists'}" do
+          before { resource.exist = e }
+
+          it "should reply with 201 when the Location header has been set" do
+            resource.exist = e
+            resource.new_loc = "http://ruby-doc.org/"
+            subject.run
+            response.code.should == 201
+          end
+          it "should not reply with 201 when the Location header has not been set" do
             resource.exist = e
             subject.run
             response.headers['Location'].should be_nil
@@ -915,24 +996,56 @@ describe Webmachine::Decision::Flow do
     end
   end
 
+  describe "#o7 (PATCH to missing resource?)" do
+    let(:body) { "new content" }
+    let(:headers){ Webmachine::Headers['content-type' => 'text/plain'] }
+    let(:method) { "PATCH" }
+    let(:resource) do
+      missing_resource_with do
+        attr_writer :allow_missing
+        def allow_missing_patch?; @allow_missing; end
+        def allowed_methods; %W{PATCH}; end
+        def content_types_accepted; [["text/plain", :accept_text]]; end
+        def accept_text
+          true
+        end
+      end
+    end
+    it "should reply with 404 when the resource disallows missing PATCHES" do
+      resource.allow_missing = false
+      subject.run
+      response.code.should == 404
+    end
+    it "should not reply with a 404 when the resource allows missing PATCHES" do
+      resource.allow_missing = true
+      subject.run
+      response.code.should_not == 404
+    end
+  end
+
   describe "#o14 (Conflict?)" do
     let(:resource) do
       resource_with do
         attr_writer :conflict
-        def allowed_methods; %W{PUT}; end
+        def allowed_methods; %W{PUT PATCH}; end
         def is_conflict?; @conflict; end
       end
     end
-    let(:method){ "PUT" }
-    it "should reply with 409 if the resource is in conflict" do
-      resource.conflict = true
-      subject.run
-      response.code.should == 409
-    end
-    it "should not reply with 409 if the resource is in conflict" do
-      resource.conflict = false
-      subject.run
-      response.code.should_not == 409
+
+    %W{PUT PATCH}.each do | http_method |
+      context "when the method is #{http_method}" do
+        let(:method){ http_method }
+        it "should reply with 409 if the resource is in conflict" do
+          resource.conflict = true
+          subject.run
+          response.code.should == 409
+        end
+        it "should not reply with 409 if the resource is in conflict" do
+          resource.conflict = false
+          subject.run
+          response.code.should_not == 409
+        end
+      end
     end
   end
 
@@ -983,9 +1096,10 @@ describe Webmachine::Decision::Flow do
           true
         end
         def delete_completed?; true; end
-        def allowed_methods; %W{GET HEAD PUT POST DELETE}; end
+        def allowed_methods; %W{GET HEAD PUT PATCH POST DELETE}; end
         def resource_exists?; @exist; end
         def allow_missing_post?; true; end
+        def allow_missing_patch?; true; end
         def content_types_accepted; [[request.content_type, :accept_all]]; end
         def multiple_choices?; @multiple; end
         def process_post
@@ -999,12 +1113,12 @@ describe Webmachine::Decision::Flow do
       end
     end
 
-    [["GET", true],["HEAD", true],["PUT", true],["PUT", false],["POST",true],["POST",false],
+    [["GET", true],["HEAD", true],["PUT", true],["PUT", false],["PATCH", true],["PATCH", false],["POST",true],["POST",false],
      ["DELETE", true]].each do |m, e|
       context "when the method is #{m} and the resource #{e ? 'exists' : 'does not exist' }" do
         let(:method){ m }
-        let(:body) { %W{PUT POST}.include?(m) ? "request body" : "" }
-        let(:headers) { %W{PUT POST}.include?(m) ? Webmachine::Headers['content-type' => 'text/plain'] : Webmachine::Headers.new }
+        let(:body) { %W{PUT PATCH POST}.include?(m) ? "request body" : "" }
+        let(:headers) { %W{PUT PATCH POST}.include?(m) ? Webmachine::Headers['content-type' => 'text/plain'] : Webmachine::Headers.new }
         before { resource.exist = e }
         it "should reply with 200 if there are not multiple representations" do
           resource.multiple = false
@@ -1028,9 +1142,10 @@ describe Webmachine::Decision::Flow do
         attr_writer :exist, :body
         def delete_resource; true; end
         def delete_completed?; true; end
-        def allowed_methods; %{GET PUT POST DELETE}; end
+        def allowed_methods; %{GET PUT PATCH POST DELETE}; end
         def resource_exists?; @exist; end
         def allow_missing_post?; true; end
+        def allow_missing_patch?; true; end
         def content_types_accepted; [[request.content_type, :accept_all]]; end
         def process_post
           response.body = @body if @body
@@ -1043,12 +1158,13 @@ describe Webmachine::Decision::Flow do
       end
     end
     let(:method) { @method || "GET" }
-    let(:headers) { %{PUT POST}.include?(method) ? Webmachine::Headers["content-type" => "text/plain"] : Webmachine::Headers.new }
-    let(:body) { %{PUT POST}.include?(method) ? "This is the body." : nil }
+    let(:headers) { %{PUT PATCH POST}.include?(method) ? Webmachine::Headers["content-type" => "text/plain"] : Webmachine::Headers.new }
+    let(:body) { %{PUT PATCH POST}.include?(method) ? "This is the body." : nil }
     context "when a response body is present" do
       before { resource.body = "Hello, world!" }
       [
        ["PUT", false],
+       ["PATCH", false],
        ["POST", false],
        ["DELETE", true],
        ["POST", true],
@@ -1065,6 +1181,7 @@ describe Webmachine::Decision::Flow do
     context "when a response body is not present" do
       [
        ["PUT", false],
+       ["PATCH", false],
        ["POST", false],
        ["DELETE", true],
        ["POST", true],

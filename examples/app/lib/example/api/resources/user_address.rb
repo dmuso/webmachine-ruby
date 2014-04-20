@@ -27,13 +27,14 @@ module Example
           @address.save
           user.address = @address
           user.save
+          @created = 201
           true
         end
 
         def patch_json
           @address.update_attributes request_body
           response.body = @address.to_json
-          true
+          @created ? 201 : true
         end
 
         def to_json

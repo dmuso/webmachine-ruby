@@ -1115,9 +1115,8 @@ describe Webmachine::Decision::Flow do
       end
     end
 
-    # Beth - don't really understand this
-    # ["PATCH", false] => should return a 201 if resource did not exist and was created, with a response body
-    [["GET", true],["HEAD", true],["PUT", true],["PUT", false],["PATCH", true],["POST",true],["POST",false],
+    # Beth - well, this kind of makes more sense now, if the 201 is set by hand, not by the FSM
+    [["GET", true],["HEAD", true],["PUT", true],["PUT", false],["PATCH", false],["PATCH", true],["POST",true],["POST",false],
      ["DELETE", true]].each do |m, e|
       context "when the method is #{m} and the resource #{e ? 'exists' : 'does not exist' }" do
         let(:method){ m }

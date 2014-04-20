@@ -511,10 +511,7 @@ module Webmachine
           case result = resource.create_missing_path
           when true
             result = accept_helper
-            if has_response_body?
-              response.headers['Location'] = request.uri.to_s # Should be a 204 otherwise
-            end
-            (Fixnum === result) ? res : :p11
+            (Fixnum === result) ? result : :p11
           when Fixnum
             result
           else

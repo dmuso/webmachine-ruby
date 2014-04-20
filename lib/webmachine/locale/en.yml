@@ -26,3 +26,4 @@ en:
     invalid_media_type: "Invalid media type: %{type}"
     not_resource_class: "%{class} is not a subclass of Webmachine::Resource"
     process_post_invalid: "process_post returned %{result}"
+    create_missing_path_invalid: "create_missing_path returned %{result}"

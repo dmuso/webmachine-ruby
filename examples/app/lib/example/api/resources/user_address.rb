@@ -22,12 +22,12 @@ module Example
           user != nil # Allow patch to a missing address if the user already exists
         end
 
-        def create_path
+        def create_missing_path
           @address = Example::Models::Address.new
           @address.save
           user.address = @address
           user.save
-          "address"
+          true
         end
 
         def patch_json

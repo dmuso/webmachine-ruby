@@ -512,16 +512,17 @@ module Webmachine
 
       def o7
         if resource.allow_missing_patch?
-          case uri = resource.create_path
-          when nil
-            raise InvalidResource, t('create_path_nil', :class => resource.class)
-          when URI, String
-            base_uri = resource.base_uri || request.base_uri
-            new_uri = URI.join(base_uri.to_s, uri)
-            request.disp_path = new_uri.path
-            response.headers['Location'] = new_uri.to_s
+          case result = resource.create_missing_path
+          when true
             result = accept_helper
-            return (Fixnum === result) ? res : :p11
+            if has_response_body?
+              response.headers['Location'] = request.uri.to_s # Should be a 204 otherwise
+            end
+            (Fixnum === result) ? res : :p11
+          when Fixnum
+            result
+          else
+            raise InvalidResource, t('create_missing_path_invalid', :result => result.inspect)
           end
         else
           404
@@ -530,9 +531,6 @@ module Webmachine
 
       # New resource?
       def p11
-        if request.patch? && has_response_body?
-          response.headers['Content-Location'] = request.uri.to_s
-        end
         !response.headers["Location"] ? :o20 : 201
       end
 

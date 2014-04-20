@@ -187,6 +187,16 @@ module Webmachine
         nil
       end
 
+
+      # This will be called on a PATCH request if allow_missing_patch? returns
+      # true. If it succeeds, it should return true.
+      # @return [true,false,Fixnum] Whether the missing path was successfully
+      #    created, or an alternate response code
+      # @api callback
+      def create_missing_path
+        false
+      end
+
       # This will be called after {#create_path} but before setting the
       # Location response header, and is used to determine the root
       # URI of the new resource. Default is nil, which uses the URI of

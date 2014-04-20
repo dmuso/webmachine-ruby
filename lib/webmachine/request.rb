@@ -13,6 +13,7 @@ module Webmachine
     HEAD_METHOD    = "HEAD"
     POST_METHOD    = "POST"
     PUT_METHOD     = "PUT"
+    PATCH_METHOD   = "PATCH"
     DELETE_METHOD  = "DELETE"
     OPTIONS_METHOD = "OPTIONS"
     TRACE_METHOD   = "TRACE"
@@ -20,8 +21,8 @@ module Webmachine
 
     STANDARD_HTTP_METHODS = [
                              GET_METHOD, HEAD_METHOD, POST_METHOD,
-                             PUT_METHOD, DELETE_METHOD, TRACE_METHOD,
-                             CONNECT_METHOD, OPTIONS_METHOD
+                             PUT_METHOD, PATCH_METHOD, DELETE_METHOD,
+                             TRACE_METHOD, CONNECT_METHOD, OPTIONS_METHOD
                             ].map!(&:freeze)
 
     # @param [String] method the HTTP request method
@@ -130,6 +131,14 @@ module Webmachine
     #   true if this request was made with the PUT method
     def put?
       method == PUT_METHOD
+    end
+
+    # Is this a PATCH request?
+    #
+    # @return [Boolean]
+    #   true if this request was made with the PUT method
+    def patch?
+      method == "PATCH"
     end
 
     # Is this a DELETE request?

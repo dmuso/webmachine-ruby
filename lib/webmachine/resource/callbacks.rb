@@ -56,6 +56,15 @@ module Webmachine
         false
       end
 
+      # If the resource accepts PATCH requests to nonexistent resources,
+      # then this should return true. Defaults to false.
+      # @return [true,false] Whether to accept PATCH requests to missing
+      #     resources.
+      # @api callback
+      def allow_missing_patch?
+        false
+      end
+
       # If the request is malformed, this should return true, which will
       # result in a '400 Malformed Request' response. Defaults to false.
       # @return [true,false] Whether the request is malformed.
@@ -134,7 +143,7 @@ module Webmachine
       # @return [Array<String>] known methods
       # @api callback
       def known_methods
-        ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT', 'OPTIONS']
+        ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'TRACE', 'CONNECT', 'OPTIONS']
       end
 
       # This method is called when a DELETE request should be enacted,
@@ -176,6 +185,16 @@ module Webmachine
       # @api callback
       def create_path
         nil
+      end
+
+
+      # This will be called on a PATCH request if allow_missing_patch? returns
+      # true. If it succeeds, it should return true.
+      # @return [true,false,Fixnum] Whether the missing path was successfully
+      #    created, or an alternate response code
+      # @api callback
+      def create_missing_path
+        false
       end
 
       # This will be called after {#create_path} but before setting the
@@ -220,6 +239,14 @@ module Webmachine
       # @return [Array] an array of mediatype/handler pairs
       # @api callback
       def content_types_accepted
+        []
+      end
+
+      # Similarly to content_types_accepted, this should return an array
+      # of mediatype/handler pairs, except that it is only for incoming PATCH requests.
+      # @return [Array] an array of mediatype/handler pairs
+      # @api callback
+      def patch_content_types_accepted
         []
       end
 

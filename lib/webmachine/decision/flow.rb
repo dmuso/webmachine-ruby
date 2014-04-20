@@ -64,6 +64,10 @@ module Webmachine
           :b9
         else
           response.headers["Allow"] = resource.allowed_methods.join(", ")
+          if resource.allowed_methods.include?("PATCH")
+            patch_content_types = resource.patch_content_types_accepted.collect(&:first).join(", ")
+            response.headers["Accept-Patch"] = patch_content_types unless patch_content_types.empty?
+          end
           405
         end
       end
@@ -285,9 +289,9 @@ module Webmachine
         end
       end
 
-      # PUT?
+      # PUT/PATCH?
       def i7
-        request.put? ? :i4 : :k7
+        request.put? || request.patch? ? :i4 : :k7
       end
 
       # If-none-match exists?
@@ -453,9 +457,9 @@ module Webmachine
         end
       end
 
-      # PUT?
+      # PUT/PATCH?
       def o16
-        request.put? ? :o14 : :o18
+        request.put? || request.patch? ? :o14 : :o18
       end
 
       # Multiple representations?
@@ -493,8 +497,35 @@ module Webmachine
         if resource.is_conflict?
           409
         else
+          :p7
+        end
+      end
+
+      def p7
+        if request.put?
           res = accept_helper
           (Fixnum === res) ? res : :p11
+        else
+          :o7
+        end
+      end
+
+      def o7
+        if resource.allow_missing_patch?
+          case result = resource.create_missing_path
+          when true
+            result = accept_helper
+            if has_response_body?
+              response.headers['Location'] = request.uri.to_s # Should be a 204 otherwise
+            end
+            (Fixnum === result) ? res : :p11
+          when Fixnum
+            result
+          else
+            raise InvalidResource, t('create_missing_path_invalid', :result => result.inspect)
+          end
+        else
+          404
         end
       end
 

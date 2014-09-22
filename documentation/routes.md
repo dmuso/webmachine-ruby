@@ -6,7 +6,7 @@
 App = Webmachine::Application.new do |app|
   app.routes do
     # Will map to /orders
-    add ["orders"], OrdersResource
+    add ["orders"], OrderResource
 
     # Will map to /orders/:id
     # request.path_info[:id] will contain the matched token value
@@ -35,8 +35,8 @@ Guards prevent a request being sent to a Resource with a matching route unless i
 ```ruby
 App = Webmachine::Application.new do |app|
   app.routes do
-    add ["orders"], lambda { |request| request.headers['X-My-App-Version'] == "1" }, OrdersResourceV1
-    add ["orders"], lambda { |request| request.headers['X-My-App-Version'] == "2" }, OrdersResourceV2
+    add ["orders"], lambda { |request| request.headers['X-My-App-Version'] == "1" }, OrderResourceV1
+    add ["orders"], lambda { |request| request.headers['X-My-App-Version'] == "2" }, OrderResourceV2
   end
 end
 
@@ -47,7 +47,7 @@ end
 ```ruby
 App = Webmachine::Application.new do |app|
   app.routes do
-    add ["orders"], OrdersResourceV1 do | request |
+    add ["orders"], OrderResourceV1 do | request |
       request.headers['X-My-App-Version'] == "1"
     end
   end
@@ -72,8 +72,8 @@ end
 
 App = Webmachine::Application.new do |app|
   app.routes do
-    add ["orders"], VersionGuard.new("1"), OrdersResourceV1
-    add ["orders"], VersionGuard.new("2"), OrdersResourceV2
+    add ["orders"], VersionGuard.new("1"), OrderResourceV1
+    add ["orders"], VersionGuard.new("2"), OrderResourceV2
   end
 end
 
@@ -87,7 +87,7 @@ User defined bindings specified for a route will be made available through `requ
 
 App = Webmachine::Application.new do |app|
   app.routes do
-    add ["orders"], OrdersResource, :foo => "bar"
+    add ["orders"], OrderResource, :foo => "bar"
   end
 end
 

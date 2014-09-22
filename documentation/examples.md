@@ -3,7 +3,7 @@ Imagine an application with an "orders" resource that represents the collection 
 ```ruby
 App = Webmachine::Application.new do |app|
   app.routes do
-    add ["orders"], OrdersResource
+    add ["orders"], OrderResource
     add ["orders", :id], OrderResource
   end
 end
